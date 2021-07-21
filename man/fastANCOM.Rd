@@ -17,38 +17,39 @@ fastANCOM(
 )
 }
 \arguments{
-\item{Y}{the abundance table, both count/relative or any smoothed data matrix}
+\item{Y}{the abundance table,  count/relative or any smoothed data matrix are supported}
 
 \item{x}{the variable of interest}
 
 \item{Z}{the other covariates to be adjusted}
 
-\item{rand}{the random variable for the mixed effect model}
+\item{rand}{the random variable of the mixed effect model}
 
 \item{pseudo}{the pseudo number for zero smoothing, default is 0.05}
 
-\item{outlier}{whether using cook's distance for outlier detection or not, default is FALSE}
+\item{outlier}{a boolean value, if TRUE the cook's distance is used for outlier detection, the default is FALSE}
 
-\item{sig}{level of significance to count the reject number, default is 0.05}
+\item{sig}{the level of significance to count the reject number, default is 0.05}
 
-\item{detect.rate}{a numerical fraction between 0.5 and 1. Taxa with proportion of the reject number greater than it will be judged as be associated with the variable of interest, i.e., x, default is 0.7}
+\item{detect.rate}{a numerical fraction between 0 and 1. Miorobes with proportion of the reject number greater than it will be identified as associated with the variable of interest, i.e., x, default is 0.7}
 
-\item{ref.rate}{a numerical fraction between 0 and 0.5 which means taking these microbes with the least reject proportion as reference to estimate the effect size in ecosystem, default is 0.05}
+\item{ref.rate}{a numerical fraction between 0 and 0.5, the proportion of total microbes with the least reject numbers and these microbes are set as the reference to estimate the effect size in ecosystem, the default is 0.05}
 }
 \value{
 a dataframe with 5 columns,
 \itemize{
-\item log2FC, the adjusted effect size from log-linear model
+\item log2FC, the adjusted effect size of log-linear model
 \item log2FC.SD, the standard errors (SEs) of log2FC
-\item log2FC.pval, the p-value from Wald test
-\item Reject.number, the reject number for each microbe
-\item REJECT, the final result whether each microbe to be associated with the variable of interest or not
+\item log2FC.pval, the p-value of Wald test
+\item Reject.number, the reject number of each microbe
+\item REJECT, the final result whether each microbe is associated with the variable of interest or not
 }
 }
 \description{
-The framework of log-linear regression is used for the log transformed data and
-then build hypothesis with the variable of interest for inference at the ecosystem level with the framework of ANCOM.
-fastANCOM fits the mariginal model and then computing the effect for the joint model
+fastANCOM fits the mariginal model and then computing the effect for the joint model.
+The framework of log-linear regression is used for the log transformed data.
+The hypothesis is build with the variable of interest for inference at the ecosystem
+level with the framework of ANCOM.
 }
 \examples{
 data <- matrix(rpois(100*60, 10), 60)
