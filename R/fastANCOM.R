@@ -38,7 +38,7 @@
 
 
 fastANCOM <- function(Y, x, Z=NULL, rand=NULL, pseudo=0.5, outlier=F,
-                        sig=0.05, detect.rate=0.7, ref.rate=0.05){
+                        sig=0.05, detect.rate=0.7, ref.rate=0.05, effect=T){
   n_otu <- ncol(Y)
   n_sample <- nrow(Y)
   logdata <- log2(Y + pseudo)
@@ -124,8 +124,8 @@ fastANCOM <- function(Y, x, Z=NULL, rand=NULL, pseudo=0.5, outlier=F,
     results <- data.frame(W=W_stat, detected=detected, detect0.7=detect0.7)
     return(results)
   }
-  tmpres <- decisionMaking(W1)
-  {
+  res <- tmpres <- decisionMaking(W1)
+  if(effect){
     rfn <- ref.rate*n_otu
     if(rfn<1) rfn <- 1
     if(n_otu<10) {
@@ -141,8 +141,13 @@ fastANCOM <- function(Y, x, Z=NULL, rand=NULL, pseudo=0.5, outlier=F,
     se0012 <- covbeta[, refset]
     adj.se12 <- sqrt(diag(covbeta) - 2/n_otu*rowSums(se0012) + sum(sers12)/n_otu^2)
     jpvs <- 2*pt(-abs(adj.beta/adj.se12), df=n_sample-2)
+    jqvs <- p.adjust(jpvs, method = 'fdr')
+    finald <- tmpres$detected
+    finald[W1<0.5*n_otu] <- F
+    finald[W1>=detect.rate*n_otu] <- T
+    res <- data.frame(log2FC=adj.beta, log2FC.SD=adj.se12, log2FC.pval=jpvs,
+                      log2FC.qval=jqvs, Reject.number=W1, REJECT=finald)
   }
-  res <- data.frame(log2FC=adj.beta, log2FC.SD=adj.se12, log2FC.pval=jpvs,
-                    Reject.number=W1, REJECT=tmpres$detected)
+
   res
 }

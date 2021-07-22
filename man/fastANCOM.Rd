@@ -13,7 +13,8 @@ fastANCOM(
   outlier = F,
   sig = 0.05,
   detect.rate = 0.7,
-  ref.rate = 0.05
+  ref.rate = 0.05,
+  effect = T
 )
 }
 \arguments{
