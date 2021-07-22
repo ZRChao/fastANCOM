@@ -16,6 +16,7 @@
 #' @param sig the level of significance to count the reject number, default is 0.05
 #' @param detect.rate a numerical fraction between 0 and 1. Miorobes with proportion of the reject number greater than it will be identified as associated with the variable of interest, i.e., x, default is 0.7
 #' @param ref.rate a numerical fraction between 0 and 0.5, the proportion of total microbes with the least reject numbers and these microbes are set as the reference to estimate the effect size in ecosystem, the default is 0.05
+#' @param effect a boolean value, if TRUE then estimate the effect size based on the reference set, the default is T
 #'
 #' @return a dataframe with 5 columns,
 #' \itemize{
