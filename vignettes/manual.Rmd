@@ -1,0 +1,120 @@
+---
+title: "Manual of fastANCOM"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{manual}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(kableExtra)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Install and load fastANCOM
+
+```{r}
+# devtools::install_github('ZRChao/fastANCOM')  
+library(fastANCOM)
+```
+
+
+### Example
+
+We take the differential abundance analysis of 2 groups for illustration.
+The data was generated from Poisson distribution for each group with 30 individuals and 100 microbes. We set the first 10 microbes to be differetial by multipling a effect size vector for the abundance of one group, which is the log2FC from a norm distribution $N(4, 1)$.
+
+#### Data generation
+
+```{r}
+set.seed(123)
+data <- matrix(rpois(100*60, 10), 60)
+b <- rnorm(10, 4)
+data[31:60,1:10] <- t(t(data[31:60,1:10])*2^b)
+group <- rep(c(0, 1), each=30)
+rownames(data) <- paste0('sample', 1:60)
+colnames(data) <- paste0('microbe', 1:100)
+names(b) <- paste0('microbe', 1:10)
+
+# take a look of the log2FC
+kable_classic(kbl(t(round(b,4)),align= "l",caption='log2FC for the first 10 microbes'),
+              html_font = "Cambria")  
+
+# take a look of the data
+kable_classic(kbl(data[1:10, 1:6], align = "l",  caption='Data at a glance'), 
+               full_width = T, html_font = "Cambria") 
+```
+
+#### Model fitting
+
+Here other parameters are set as default.
+
+```{r}
+fit <- fastANCOM(Y=data, x=group)
+kable_classic(kbl(summary(fit), caption = 'Results summary'), 
+              full_width = T, html_font = "Cambria")
+kable_classic(kbl(head(fit, 10), align = "l", 
+        caption='Results of fastANCOM'),  full_width = T, html_font = "Cambria")
+```
+
+
+> __Take a look of the computation time with 100 replicates, fastANCOM thousand times faster than original ANCOM__
+
+```{r, warning=F, message=F}
+system.time(replicate(100, fit <- fastANCOM(Y=data, x=group, effect = T)))
+system.time(replicate(100, fit <- fastANCOM(Y=data, x=group, effect = F)))
+system.time(replicate(1, fit <- ANCOM(Y=data, x=group, tfun = wilcox.test))) 
+system.time(replicate(1, fit <- ANCOM(Y=data, x=group, tfun = t.test))) 
+```
+
+#### Results with plot 
+
+We present plots of reject number of each microbe, valcano plot, and the effect size estimation compared to the true settings.
+
+```{r, fig.align='center', fig.width=6.5, fig.height=3.6}
+library(ggplot2)
+library(ggpubr)
+wp <- ggplot(data=fit, aes(x=1:100,y=Reject.number, color=REJECT, shape=REJECT)) + 
+  geom_bar(aes(y=Reject.number), stat = "identity", width = 0.005, color='lightgrey') +
+  # geom_vline(xintercept = 1:100, linetype='dashed', size=0.1) +
+  geom_point(size=2) + theme_linedraw() + 
+  labs(x='Microbe',y='W', title='Reject number') +
+  scale_colour_brewer(palette = "Set1", direction=-1) + 
+  theme(legend.position = c(0.85, 0.78), 
+        legend.background = element_rect(fill = "white", colour = "black"))
+wp
+
+vp <-ggplot(data=fit,aes(x=log2FC,y=-log10(log2FC.pval), color=REJECT, shape=REJECT)) +
+  geom_hline(yintercept=-log10(0.05/nrow(fit)),
+             linetype="dashed",color="black",size=0.5)+ 
+  geom_point(size=2) + theme_linedraw() + labs(y='log2(p-value)', title='Volcano plot') +
+  theme(legend.position='none') +
+  scale_colour_brewer(palette = "Set1",direction=-1) 
+vp
+
+tmpb <- data.frame(Microbe=factor(1:10),log2FC=c(b, fit[fit$REJECT, 1]), 
+                   se=c(rep(0, 10), fit[fit$REJECT, 2]),
+                   Type=c(rep('Truth', 10), rep('Estimation', 10)))
+ep <- ggplot(data=tmpb, aes(x=Microbe, y=log2FC, color=Type, shape=Type))  +
+  geom_point(size=2, position =  position_dodge(0.2) ) + 
+  geom_errorbar(aes(ymin=log2FC-2*se, ymax=log2FC+2*se),
+                width=0.2, position =  position_dodge(0.2)) +
+  theme_linedraw() + labs(title='Effect size') +
+  scale_colour_brewer(palette = "Set1", direction=-1) +
+   theme(legend.position = c(0.7, 0.8), 
+        legend.background = element_rect(fill = "white", colour = "black"))
+ep
+```
+
+
+
+```{r, fig.align='center', fig.width=8, fig.height=5, eval=F, echo=F}
+figs <- ggarrange(wp, ggarrange(vp, ep, ncol=2), nrow=2)
+figs
+```
+

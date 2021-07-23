@@ -16,6 +16,7 @@
 #' \itemize{
 #' \item Reject.number, the reject number of each microbe
 #' \item REJECT, the final result whether each microbe is associated with the variable of interest or not
+#' \item detect0.7 hard threshold 0.7 to identify the differential microbes
 #' }
 #'
 #' @examples
