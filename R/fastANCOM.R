@@ -130,6 +130,7 @@ fastANCOM <- function(Y, x, Z=NULL, rand=NULL, pseudo=0.5, outlier=F,
     rfn <- ref.rate*n_otu
     if(rfn<1) rfn <- 1
     if(n_otu<10) {
+      rfn <- 1
       refset <- order(W1)[1]
     }else{
       # refset <- which(W1<rfn & tmpres$detected==F)
@@ -140,7 +141,7 @@ fastANCOM <- function(Y, x, Z=NULL, rand=NULL, pseudo=0.5, outlier=F,
     adj.beta <- beta - mean(beta[refset])
     sers12 <- covbeta[refset, refset]
     se0012 <- covbeta[, refset]
-    adj.se12 <- sqrt(diag(covbeta) - 2/n_otu*rowSums(se0012) + sum(sers12)/n_otu^2)
+    adj.se12 <- sqrt(diag(covbeta) - 2/rfn*rowSums(se0012) + sum(sers12)/rfn^2)
     jpvs <- 2*pt(-abs(adj.beta/adj.se12), df=n_sample-2)
     jqvs <- p.adjust(jpvs, method = 'fdr')
     finald <- tmpres$detected

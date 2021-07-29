@@ -8,11 +8,11 @@
 #'
 #' @param Y the abundance table,  count/relative or any smoothed data matrix are supported
 #' @param x the variable of interest
-#' @param tfun the test function used, including t.test, wilcox.test, kruskal.test
-#' @param pseudo the pseudo number for zero smoothing, default is 0.05
+#' @param tfun the test function used, including t.test, wilcox.test, kruskal.test, and a speed version for wilcox.test based on the Mann-Whitney U statistic which denote as 't2'
+#' @param pseudo the pseudo number for zero smoothing, default is 0.5
 #' @param sig the level of significance to count the reject number, default is 0.05
 #'
-#' @return a dataframe with 2 columns,
+#' @return a dataframe with 3 columns,
 #' \itemize{
 #' \item Reject.number, the reject number of each microbe
 #' \item REJECT, the final result whether each microbe is associated with the variable of interest or not
@@ -30,23 +30,84 @@
 #'
 
 
-ANCOM <- function(Y, x, tfun=t.test, pseudo=0.5, sig=0.05){
+ANCOM <- function(Y, x, tfun='t2', pseudo=0.5, sig=0.05){
   n_otu <- ncol(Y)
   n_sample <- nrow(Y)
   logdata <- log2(Y + pseudo)
   logdata[is.infinite(logdata)] <- NA
   logratio.mat <- matrix(NA, nrow=n_otu, ncol=n_otu)
-  for(ii in 1:(n_otu-1)){
-    if(ii%%500 ==0) cat(ii, 'th for ANCOM done!\n')
-    data.pair <- logdata[,ii:n_otu]
-    lr <- data.pair[,1] - data.pair[,-1]
-    logratio.mat[ii,(ii+1):n_otu] <- apply(as.matrix(lr), 2, function(y) tfun(y~x)$p.value)
+  if(class(tfun) == "function"){
+    for(ii in 1:(n_otu-1)){
+      if(ii%%500 ==0) cat(ii, 'th for ANCOM done!\n')
+      data.pair <- logdata[,ii:n_otu]
+      lr <- data.pair[,1] - data.pair[,-1]
+      logratio.mat[ii,(ii+1):n_otu] <- apply(as.matrix(lr), 2, function(y) tfun(y~x)$p.value)
+    }
+    ind <- lower.tri(logratio.mat)
+    logratio.mat[ind] <- t(logratio.mat)[ind]
+    logratio.mat[which(is.finite(logratio.mat)==FALSE)] <- 1
+    W1 <- rowSums(logratio.mat < sig, na.rm = T)
   }
-  ind <- lower.tri(logratio.mat)
-  logratio.mat[ind] <- t(logratio.mat)[ind]
-  logratio.mat[which(is.finite(logratio.mat)==FALSE)] <- 1
+  if(class(tfun) != "function") { # for two groups
+    g1 <- unique(x)[1]
+    n1 <- table(x)[1]
+    n2 <- n_sample - n1
+    sig <- qwilcox(sig/2, m = n1, n = n2, lower.tail = F)
+    if(tfun == 't1') {
+      for(ii in 1:(n_otu-1)) {
+        data.pair <- logdata[,ii:n_otu]
+        lr <- as.matrix(data.pair[,1] - data.pair[,-1])
+        lr1<- as.matrix(lr[x==g1, ])
+        lr2<- as.matrix(lr[x!=g1, ])
+        u <- rep(NA, ncol(lr))
+        for(j in 1:ncol(lr)) {
+          x1 <- lr1[, j]
+          t2 <- matrix(lr2[, j], nrow=n1, ncol=n2, byrow = T)
+          x2 <- sum(x1>t2) + 0.5*sum(x1==t2)
+          u[j] <- ifelse(x2>n1*n2/2, x2, n1*n2 - x2)
+        }
+        # t1 <- matrix(matrix(rep(t(lr1), n2), ncol=ncol(lr), byrow = T), nrow=n1)
+        # t2 <- matrix(lr2, nrow=n1, ncol=n2*ncol(lr), byrow = T)
+        # t3 <- colSums(t1 > t2) + colSums(t1==t2)*0.5
+        # u <- rowSums(matrix(t3, nrow=ncol(lr), byrow = T))
+        # u[u<n1*n2/2] <- n1*n2 - u[u<n1*n2/2]
+        logratio.mat[ii, (ii+1):n_otu] <- u
+      }
+    }
+    if(tfun == 't2') {
+      tmp1 <- logdata[x==g1, ]
+      tmp2 <- logdata[x!=g1, ]
+      tmp12 <- matrix(NA, n1*n2, n_otu)
+      for(ii in 1:n_otu) {
+        tmp12[, ii] <- tmp1[, ii]- rep(tmp2[, ii], each=n1)
+      }
+      logratio.mat <- matrix(NA, nrow=n_otu, ncol=n_otu)
+      for(ii in 1:(n_otu-1)) {
+        ti2 <- as.matrix(tmp12[, (ii+1):n_otu])
+        ti <- colSums(tmp12[, ii] > ti2) + colSums(tmp12[, ii] == ti2)*0.5
+        ti[ti<n1*n2/2] <- n1*n2 - ti[ti<n1*n2/2]
+        logratio.mat[ii, (ii+1):n_otu] <- ti
+      }
+    }
+    if(tfun == 't3') {
+      tmp1 <- logdata[x==g1, ]
+      tmp2 <- logdata[x!=g1, ]
+      tmp12 <- matrix(NA, n1*n2, n_otu)
+      tmp12[,1] <- tmp1[, 1]- rep(tmp2[, 1], each=n1)
+      for(ii in 2:n_otu) {
+        tmp12[, ii] <- tmp1[, ii]- rep(tmp2[, ii], each=n1)
+        tii <- as.matrix(tmp12[, ii] - tmp12[,1:(ii-1)])
+        tiu <- colSums(tii>0) + colSums(tii==0)*0.5
+        tiu[tiu<n1*n2/2] <- n1*n2 - tiu[tiu<n1*n2/2]
+        logratio.mat[1:(ii-1), ii] <- tiu
+      }
+    }
+    ind <- lower.tri(logratio.mat)
+    logratio.mat[ind] <- t(logratio.mat)[ind]
+    logratio.mat[which(is.finite(logratio.mat)==FALSE)] <- NA
+    W1 <- rowSums(logratio.mat > sig, na.rm = T)
+  }
 
-  W1 <- rowSums(logratio.mat < sig, na.rm = T)
 
   decisionMaking <- function(W, detect=0.7, tau=0.02, theta=0.26){
     W_stat  <- W
@@ -91,3 +152,15 @@ ANCOM <- function(Y, x, tfun=t.test, pseudo=0.5, sig=0.05){
   res <- decisionMaking(W1)
   res
 }
+
+
+
+
+
+
+
+
+
+
+
+

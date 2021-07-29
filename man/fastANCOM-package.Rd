@@ -5,7 +5,13 @@
 A fast method for analysis of composition of microbiomes
 }
 \description{
-\strong{fastANCOM} We implement the original ANCOM and a fast version fastANCOM under the log-linear model.
+ We implement several versions to realize \strong{ANCOM}, including
+
+ \itemize{
+ \item the original ANCOM based on the for loop,
+ \item a speed up version for ANCOM based on Mann-Whiteny U statistic which almost hundred faster than the original one,
+ \item  and a rapid version \strong{fastANCOM} under the log-linear model which will be several thousands of times faster than the orignal one.
+}
 
     The complete list of functions can be displayed with library(help = fastANCOM).
 
@@ -22,15 +28,17 @@ A fast method for analysis of composition of microbiomes
 %}
 %}
 \details{
-      Package: fastANCOM
+ \itemize{
+  \item    Package: \strong{fastANCOM}
 
-      Type: R package
+   \item     Type: R package
 
-      Version: 0.1.0
+   \item     Version: 0.1.0
 
-      Date: 2021-7-1
+    \item    Date: 2021-7-1
 
-      License: GPL-2
+    \item    License: GPL-2
+   }
 }
 
 \author{

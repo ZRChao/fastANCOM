@@ -63,18 +63,19 @@ kable_classic(kbl(head(fit, 10), align = "l",
 ```
 
 
-> __Take a look of the computation time with 100 replicates, fastANCOM thousand times faster than original ANCOM__
+> __Take a look of the computation time with 100 replicates, fastANCOM thousands of times faster than original ANCOM__
 
 ```{r, warning=F, message=F}
 system.time(replicate(100, fit <- fastANCOM(Y=data, x=group, effect = T)))
 system.time(replicate(100, fit <- fastANCOM(Y=data, x=group, effect = F)))
 system.time(replicate(1, fit <- ANCOM(Y=data, x=group, tfun = wilcox.test))) 
 system.time(replicate(1, fit <- ANCOM(Y=data, x=group, tfun = t.test))) 
+system.time(replicate(100, fit <- ANCOM(Y=data, x=group, tfun = 't2'))) 
 ```
 
 #### Results with plot 
 
-We present plots of reject number of each microbe, valcano plot, and the effect size estimation compared to the true settings.
+We present plots of reject number of each microbe, valcano plot, and the log2 fold changes estimation compared to the true settings.
 
 ```{r, fig.align='center', fig.width=6.5, fig.height=3.6}
 library(ggplot2)
@@ -104,7 +105,7 @@ ep <- ggplot(data=tmpb, aes(x=Microbe, y=log2FC, color=Type, shape=Type))  +
   geom_point(size=2, position =  position_dodge(0.2) ) + 
   geom_errorbar(aes(ymin=log2FC-2*se, ymax=log2FC+2*se),
                 width=0.2, position =  position_dodge(0.2)) +
-  theme_linedraw() + labs(title='Effect size') +
+  theme_linedraw() + labs(title='Log2FC estimation') +
   scale_colour_brewer(palette = "Set1", direction=-1) +
    theme(legend.position = c(0.7, 0.8), 
         legend.background = element_rect(fill = "white", colour = "black"))

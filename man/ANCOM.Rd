@@ -4,21 +4,21 @@
 \alias{ANCOM}
 \title{ANCOM, the traditional method for analysis of composition of microbiomes}
 \usage{
-ANCOM(Y, x, tfun = t.test, pseudo = 0.5, sig = 0.05)
+ANCOM(Y, x, tfun = "t2", pseudo = 0.5, sig = 0.05)
 }
 \arguments{
 \item{Y}{the abundance table,  count/relative or any smoothed data matrix are supported}
 
 \item{x}{the variable of interest}
 
-\item{tfun}{the test function used, including t.test, wilcox.test, kruskal.test}
+\item{tfun}{the test function used, including t.test, wilcox.test, kruskal.test, and a speed version for wilcox.test based on the Mann-Whitney U statistic which denote as 't2'}
 
-\item{pseudo}{the pseudo number for zero smoothing, default is 0.05}
+\item{pseudo}{the pseudo number for zero smoothing, default is 0.5}
 
 \item{sig}{the level of significance to count the reject number, default is 0.05}
 }
 \value{
-a dataframe with 2 columns,
+a dataframe with 3 columns,
 \itemize{
 \item Reject.number, the reject number of each microbe
 \item REJECT, the final result whether each microbe is associated with the variable of interest or not
