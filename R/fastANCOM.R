@@ -140,7 +140,7 @@ fastANCOM <- function(Y, x, Z=NULL, rand=NULL, pseudo=0.5, outlier=F,
     rawp <- 2*pt(-abs(beta/diag(covbeta)), df=n_sample-2)
     adj.beta <- beta - mean(beta[refset])
     sers12 <- covbeta[refset, refset]
-    se0012 <- covbeta[, refset]
+    se0012 <- as.matrix(covbeta[, refset])
     adj.se12 <- sqrt(diag(covbeta) - 2/rfn*rowSums(se0012) + sum(sers12)/rfn^2)
     jpvs <- 2*pt(-abs(adj.beta/adj.se12), df=n_sample-2)
     jqvs <- p.adjust(jpvs, method = 'fdr')
