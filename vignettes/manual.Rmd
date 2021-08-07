@@ -19,8 +19,12 @@ knitr::opts_chunk$set(echo = TRUE)
 ### Install and load fastANCOM
 
 ```{r}
-# devtools::install_github('ZRChao/fastANCOM')  
+if(!require(fastANCOM)) {
+  devtools::install_github('ZRChao/fastANCOM')  
+}
 library(fastANCOM)
+packageVersion('fastANCOM')
+browseVignettes('fastANCOM')
 ```
 
 
@@ -118,4 +122,11 @@ ep
 figs <- ggarrange(wp, ggarrange(vp, ep, ncol=2), nrow=2)
 figs
 ```
+
+
+```{r}
+sessionInfo()
+```
+
+
 

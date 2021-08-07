@@ -137,6 +137,8 @@ fastANCOM <- function(Y, x, Z=NULL, rand=NULL, pseudo=0.5, outlier=F,
       # rfn0   <- ifelse(length(refset) > rfn, rfn, length(refset)*0.9)
       refset <- order(W1)[1:rfn]
     }
+    if(length(rfn)<5) warning(paste0('Only take ', rfn, ' components as reference!'))
+
     rawp <- 2*pt(-abs(beta/diag(covbeta)), df=n_sample-2)
     adj.beta <- beta - mean(beta[refset])
     sers12 <- covbeta[refset, refset]
