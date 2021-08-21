@@ -33,7 +33,7 @@ A fast method for analysis of composition of microbiomes
 
    \item     Type: R package
 
-   \item     Version: 0.1.0
+   \item     Version: 0.0.4
 
     \item    Date: 2021-7-1
 
@@ -64,7 +64,8 @@ b <- rnorm(10, 4)
 data[31:60,1:10] <- t(t(data[31:60,1:10])*2^b)
 group <- rep(c(0, 1), each=30)
 fit <- fastANCOM(Y=data, x=group)
-head(fit)
+summary(fit)
+head(fit$results$final)
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory (show via RShowDoc("KEYWORDS")):

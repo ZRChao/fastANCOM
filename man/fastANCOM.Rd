@@ -9,7 +9,11 @@ fastANCOM(
   x,
   Z = NULL,
   rand = NULL,
+  zero_cut = 0.9,
+  lib_cut = 0,
+  struc_zero = FALSE,
   pseudo = 0.5,
+  global = F,
   outlier = F,
   sig = 0.05,
   detect.rate = 0.7,
@@ -26,7 +30,15 @@ fastANCOM(
 
 \item{rand}{the random variable of the mixed effect model}
 
+\item{zero_cut}{a numerical fraction between 0 and 1. Taxa with proportion of zeroes greater than zero_cut will be excluded in the analysis. Default is 0.90}
+
+\item{lib_cut}{a numerical threshold for filtering samples based on library sizes. Samples with library sizes less than lib_cut will be excluded in the analysis. Default is 0, i.e. do not filter any sample.}
+
+\item{struc_zero}{whether to detect structural zeros. Default is FALSE}
+
 \item{pseudo}{the pseudo number for zero smoothing, default is 0.05}
+
+\item{global}{whether to perform global test for more than two groups. Default is FALSE}
 
 \item{outlier}{a boolean value, if TRUE the cook's distance is used for outlier detection, the default is FALSE}
 
@@ -39,13 +51,23 @@ fastANCOM(
 \item{effect}{a boolean value, if TRUE then estimate the effect size based on the reference set, the default is T}
 }
 \value{
-a dataframe with 5 columns,
+a list with two components:
+\itemize{
+\item global, if the variable of interest x is continuous or global==FALSE, it returns NULL, otherwise a list with three components
+\itemize{
+\item marginal, a list contains the estimated coefficient and the covariance structure of the marginal model
+\item joint, a list contains 4 elements for the joint model: beta, the coefficients from the joint model; se, the corresponding standard error; statistic, the Wald statistic; and W, the reject number of each component.
+\item final, a data.frame contains the 5 columns for the final effect size estimation,
 \itemize{
 \item log2FC, the adjusted effect size of log-linear model
 \item log2FC.SD, the standard errors (SEs) of log2FC
 \item log2FC.pval, the p-value of Wald test
 \item Reject.number, the reject number of each microbe
 \item REJECT, the final result whether each microbe is associated with the variable of interest or not
+}
+}
+
+\item results, a list contains the results for the pairwise group comparison, each element will be same structure as above
 }
 }
 \description{
@@ -60,5 +82,6 @@ b <- rnorm(10, 4)
 data[31:60,1:10] <- t(t(data[31:60,1:10])*2^b)
 group <- rep(c(0, 1), each=30)
 fit <- fastANCOM(Y=data, x=group)
-head(fit)
+summary(fit)
+head(fit$results$final)
 }

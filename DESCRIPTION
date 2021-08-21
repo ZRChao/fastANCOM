@@ -1,13 +1,12 @@
 Package: fastANCOM
 Title: fastANCOM
-Version: 0.0.2
+Version: 0.0.4
 Authors@R: 
     person(given = "Chao",
            family = "Zhou",
            role = c("aut", "cre"),
            email = "Supdream8@sjtu.edu.cn")
-Description: a fast method for analysis of composition of
-    microbiomes
+Description: a fast method for analysis of composition of microbiomes
 License: GPL-3
 Encoding: UTF-8
 Language: es
@@ -17,6 +16,5 @@ RoxygenNote: 7.1.1
 Imports: 
     nlme
 Suggests: 
-    knitr,
-    rmarkdown
+    rmarkdown, knitr,
 VignetteBuilder: knitr

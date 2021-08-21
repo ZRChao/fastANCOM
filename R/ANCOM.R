@@ -11,6 +11,9 @@
 #' @param tfun the test function used, including t.test, wilcox.test, kruskal.test, and a speed version for wilcox.test based on the Mann-Whitney U statistic which denote as 't2'
 #' @param pseudo the pseudo number for zero smoothing, default is 0.5
 #' @param sig the level of significance to count the reject number, default is 0.05
+#' @param zero_cut a numerical fraction between 0 and 1. Taxa with proportion of zeroes greater than zero_cut will be excluded in the analysis. Default is 0.90
+#' @param lib_cut a numerical threshold for filtering samples based on library sizes. Samples with library sizes less than lib_cut will be excluded in the analysis. Default is 0, i.e. do not filter any sample.
+#' @param struc_zero whether to detect structural zeros. Default is FALSE
 #'
 #' @return a dataframe with 3 columns,
 #' \itemize{
@@ -30,7 +33,136 @@
 #'
 
 
-ANCOM <- function(Y, x, tfun='t2', pseudo=0.5, sig=0.05){
+ANCOM <- function(Y, x, tfun='t2', pseudo=0.5, sig=0.05,
+                  zero_cut=0.9, lib_cut=0, struc_zero=F){
+
+  feature_table_pre_process = function(feature_table, meta_data, sample_var, group_var = NULL,
+                                       out_cut = 0.05, zero_cut = 0.90, lib_cut, neg_lb=F){
+    feature_table = data.frame(feature_table, check.names = FALSE)
+    meta_data = data.frame(meta_data, check.names = FALSE)
+    # Drop unused levels
+    meta_data[] = lapply(meta_data, function(x) if(is.factor(x)) factor(x) else x)
+    # Match sample IDs between metadata and feature table
+    sample_ID = intersect(meta_data[, sample_var], colnames(feature_table))
+    feature_table = feature_table[, sample_ID]
+    meta_data = meta_data[match(sample_ID, meta_data[, sample_var]), ]
+
+    # 1. Identify outliers within each taxon
+    if (!is.null(group_var)) {
+      group = meta_data[, group_var]
+      z = feature_table + 1 # Add pseudo-count (1)
+      f = log(z); f[f == 0] = NA; f = colMeans(f, na.rm = T)
+      f_fit = lm(f ~ group)
+      e = rep(0, length(f)); e[!is.na(group)] = residuals(f_fit)
+      y = t(t(z) - e)
+
+      outlier_check = function(x){
+        # Fitting the mixture model using the algorithm of Peddada, S. Das, and JT Gene Hwang (2002)
+        mu1 = quantile(x, 0.25, na.rm = T); mu2 = quantile(x, 0.75, na.rm = T)
+        sigma1 = quantile(x, 0.75, na.rm = T) - quantile(x, 0.25, na.rm = T); sigma2 = sigma1
+        pi = 0.75
+        n = length(x)
+        epsilon = 100
+        tol = 1e-5
+        score = pi*dnorm(x, mean = mu1, sd = sigma1)/((1 - pi)*dnorm(x, mean = mu2, sd = sigma2))
+        while (epsilon > tol) {
+          grp1_ind = (score >= 1)
+          mu1_new = mean(x[grp1_ind]); mu2_new = mean(x[!grp1_ind])
+          sigma1_new = sd(x[grp1_ind]); if(is.na(sigma1_new)) sigma1_new = 0
+          sigma2_new = sd(x[!grp1_ind]); if(is.na(sigma2_new)) sigma2_new = 0
+          pi_new = sum(grp1_ind)/n
+
+          para = c(mu1_new, mu2_new, sigma1_new, sigma2_new, pi_new)
+          if(any(is.na(para))) break
+
+          score = pi_new * dnorm(x, mean = mu1_new, sd = sigma1_new)/
+            ((1-pi_new) * dnorm(x, mean = mu2_new, sd = sigma2_new))
+
+          epsilon = sqrt((mu1 - mu1_new)^2 + (mu2 - mu2_new)^2 +
+                           (sigma1 - sigma1_new)^2 + (sigma2 - sigma2_new)^2 + (pi - pi_new)^2)
+          mu1 = mu1_new; mu2 = mu2_new; sigma1 = sigma1_new; sigma2 = sigma2_new; pi = pi_new
+        }
+
+        if(mu1 + 1.96 * sigma1 < mu2 - 1.96 * sigma2){
+          if(pi < out_cut){
+            out_ind = grp1_ind
+          }else if(pi > 1 - out_cut){
+            out_ind = (!grp1_ind)
+          }else{
+            out_ind = rep(FALSE, n)
+          }
+        }else{
+          out_ind = rep(FALSE, n)
+        }
+        return(out_ind)
+      }
+      out_ind = matrix(FALSE, nrow = nrow(feature_table), ncol = ncol(feature_table))
+      out_ind[, !is.na(group)] = t(apply(y, 1, function(i)
+        unlist(tapply(i, group, function(j) outlier_check(j)))))
+
+      feature_table[out_ind] = NA
+    }
+
+    # 2. Discard taxa with zeros  >=  zero_cut
+    zero_prop = apply(feature_table, 1, function(x) sum(x == 0, na.rm = T)/length(x[!is.na(x)]))
+    taxa_del = which(zero_prop >= zero_cut)
+    if(length(taxa_del) > 0){
+      feature_table = feature_table[- taxa_del, ]
+    }
+
+    # 3. Discard samples with library size < lib_cut
+    lib_size = colSums(feature_table, na.rm = T)
+    if(any(lib_size < lib_cut)){
+      subj_del = which(lib_size < lib_cut)
+      feature_table = feature_table[, - subj_del]
+      meta_data = meta_data[- subj_del, ]
+    }
+
+    # 4. Identify taxa with structure zeros
+    if (!is.null(group_var)) {
+      group = factor(meta_data[, group_var])
+      present_table = as.matrix(feature_table)
+      present_table[is.na(present_table)] = 0
+      present_table[present_table != 0] = 1
+
+      p_hat = t(apply(present_table, 1, function(x)
+        unlist(tapply(x, group, function(y) mean(y, na.rm = T)))))
+      samp_size = t(apply(feature_table, 1, function(x)
+        unlist(tapply(x, group, function(y) length(y[!is.na(y)])))))
+      p_hat_lo = p_hat - 1.96 * sqrt(p_hat * (1 - p_hat)/samp_size)
+
+      struc_zero = (p_hat == 0) * 1
+      # Whether we need to classify a taxon into structural zero by its negative lower bound?
+      if(neg_lb) struc_zero[p_hat_lo <= 0] = 1
+
+      # Entries considered to be structural zeros are set to be 0s
+      struc_ind = struc_zero[, group]
+      feature_table = feature_table * (1 - struc_ind)
+
+      colnames(struc_zero) = paste0("structural_zero (", colnames(struc_zero), ")")
+    }else{
+      struc_zero = NULL
+    }
+
+    # 5. Return results
+    res = list(feature_table = feature_table, meta_data = meta_data, structure_zeros = struc_zero)
+    return(res)
+  }
+
+  if(struc_zero) {
+    if(is.null(rownames(Y))) id <- 1:nrow(Y)
+    meta_data <- data.frame(ID=id, x=x)
+    tmp <- feature_table_pre_process(feature_table=t(Y), meta_data=meta_data,
+                                     sample_var='ID', group_var = 'x',
+                                     out_cut = 0.05, zero_cut = zero_cut, lib_cut=lib_cut, neg_lb=F)
+    Y <- t(as.matrix(tmp$feature_table))
+    x <- unlist(meta_data[, 'x'])
+    if(struc_zero) {
+      stru.zero <- tmp$structure_zeros
+      Y <- Y[rowSums(stru.zero)==0, ]
+    }
+  }
+
   n_otu <- ncol(Y)
   n_sample <- nrow(Y)
   logdata <- log2(Y + pseudo)

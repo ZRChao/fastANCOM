@@ -4,7 +4,16 @@
 \alias{ANCOM}
 \title{ANCOM, the traditional method for analysis of composition of microbiomes}
 \usage{
-ANCOM(Y, x, tfun = "t2", pseudo = 0.5, sig = 0.05)
+ANCOM(
+  Y,
+  x,
+  tfun = "t2",
+  pseudo = 0.5,
+  sig = 0.05,
+  zero_cut = 0.9,
+  lib_cut = 0,
+  struc_zero = F
+)
 }
 \arguments{
 \item{Y}{the abundance table,  count/relative or any smoothed data matrix are supported}
@@ -16,6 +25,12 @@ ANCOM(Y, x, tfun = "t2", pseudo = 0.5, sig = 0.05)
 \item{pseudo}{the pseudo number for zero smoothing, default is 0.5}
 
 \item{sig}{the level of significance to count the reject number, default is 0.05}
+
+\item{zero_cut}{a numerical fraction between 0 and 1. Taxa with proportion of zeroes greater than zero_cut will be excluded in the analysis. Default is 0.90}
+
+\item{lib_cut}{a numerical threshold for filtering samples based on library sizes. Samples with library sizes less than lib_cut will be excluded in the analysis. Default is 0, i.e. do not filter any sample.}
+
+\item{struc_zero}{whether to detect structural zeros. Default is FALSE}
 }
 \value{
 a dataframe with 3 columns,

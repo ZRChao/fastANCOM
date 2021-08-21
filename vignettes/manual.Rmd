@@ -60,9 +60,10 @@ Here other parameters are set as default.
 
 ```{r}
 fit <- fastANCOM(Y=data, x=group)
+final_fit <- fit$results$final
 kable_classic(kbl(summary(fit), caption = 'Results summary'), 
               full_width = T, html_font = "Cambria")
-kable_classic(kbl(head(fit, 10), align = "l", 
+kable_classic(kbl(head(final_fit, 10), align = "l", 
         caption='Results of fastANCOM'),  full_width = T, html_font = "Cambria")
 ```
 
@@ -84,7 +85,7 @@ We present plots of reject number of each microbe, valcano plot, and the log2 fo
 ```{r, fig.align='center', fig.width=6.5, fig.height=3.6}
 library(ggplot2)
 library(ggpubr)
-wp <- ggplot(data=fit, aes(x=1:100,y=Reject.number, color=REJECT, shape=REJECT)) + 
+wp <- ggplot(data=final_fit, aes(x=1:100,y=Reject.number, color=REJECT, shape=REJECT)) + 
   geom_bar(aes(y=Reject.number), stat = "identity", width = 0.005, color='lightgrey') +
   # geom_vline(xintercept = 1:100, linetype='dashed', size=0.1) +
   geom_point(size=2) + theme_linedraw() + 
@@ -94,16 +95,16 @@ wp <- ggplot(data=fit, aes(x=1:100,y=Reject.number, color=REJECT, shape=REJECT))
         legend.background = element_rect(fill = "white", colour = "black"))
 wp
 
-vp <-ggplot(data=fit,aes(x=log2FC,y=-log10(log2FC.pval), color=REJECT, shape=REJECT)) +
-  geom_hline(yintercept=-log10(0.05/nrow(fit)),
+vp <-ggplot(data=final_fit,aes(x=log2FC,y=-log10(log2FC.pval), color=REJECT, shape=REJECT)) +
+  geom_hline(yintercept=-log10(0.05/nrow(final_fit)),
              linetype="dashed",color="black",size=0.5)+ 
   geom_point(size=2) + theme_linedraw() + labs(y='log2(p-value)', title='Volcano plot') +
   theme(legend.position='none') +
   scale_colour_brewer(palette = "Set1",direction=-1) 
 vp
 
-tmpb <- data.frame(Microbe=factor(1:10),log2FC=c(b, fit[fit$REJECT, 1]), 
-                   se=c(rep(0, 10), fit[fit$REJECT, 2]),
+tmpb <- data.frame(Microbe=factor(1:10),log2FC=c(b, final_fit[final_fit$REJECT, 1]), 
+                   se=c(rep(0, 10), final_fit[final_fit$REJECT, 2]),
                    Type=c(rep('Truth', 10), rep('Estimation', 10)))
 ep <- ggplot(data=tmpb, aes(x=Microbe, y=log2FC, color=Type, shape=Type))  +
   geom_point(size=2, position =  position_dodge(0.2) ) + 

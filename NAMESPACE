@@ -1,3 +1,3 @@
 exportPattern("^[[:alpha:]]+")
-importFrom("stats", "anova", "cooks.distance", "lm", "pt", "qt", "p.adjust","t.test","wilcox.test", "kruskal.test", "qwilcox")
+importFrom("stats", "anova", "cooks.distance", "lm", "pt", "qt", "p.adjust","t.test","wilcox.test", "kruskal.test", "qwilcox","residuals","quantile","dnorm","sd")
 importFrom("nlme", "lme")
