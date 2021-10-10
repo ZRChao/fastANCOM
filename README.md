@@ -1,5 +1,5 @@
 # fastANCOM
-A fast method for analysis of composition of microbiomes
+A fast method for analysis of compositions of microbiomes. 
 
 ## Install and load fastANCOM
 
@@ -8,6 +8,8 @@ devtools::install_github('ZRChao/fastANCOM')
 library(fastANCOM)
 help(fastANCOM)
 ```
+The details of the manual could be found at https://rpubs.com/RChao/820127.
+
 
 ## News
 
