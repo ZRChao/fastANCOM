@@ -8,7 +8,7 @@ devtools::install_github('ZRChao/fastANCOM')
 library(fastANCOM)
 help(fastANCOM)
 ```
-The details of the manual could be found at https://rpubs.com/RChao/820127.
+The details of the manual could be found at https://rpubs.com/RChao/820127. The codes for simulation and real data application could be found at the fold ```../Supp```
 
 
 ## News
