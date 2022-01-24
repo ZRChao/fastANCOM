@@ -19,3 +19,7 @@ The details of the manual could be found at https://rpubs.com/RChao/820127. The 
 - Version 0.0.4, 2021.8.21 Global and pairwise comparison among groups was designed
 
 Any suggestions or problem, please contact Chao Zhou（Supdream8@sjtu.edu.cn) .
+
+*Citation*：
+- Mandal, Siddhartha, et al. "Analysis of composition of microbiomes: a novel method for studying microbial composition." Microbial ecology in health and disease 26.1 (2015): 27663.
+- Zhou, Chao, et al. "fastANCOM: a fast method for analysis of compositions of microbiomes" (under review, 2022)
