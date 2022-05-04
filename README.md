@@ -22,4 +22,4 @@ Any suggestions or problem, please contact Chao Zhou（Supdream8@sjtu.edu.cn) .
 
 *Citation*：
 - Mandal, Siddhartha, et al. "Analysis of composition of microbiomes: a novel method for studying microbial composition." Microbial ecology in health and disease 26.1 (2015): 27663.
-- Zhou, Chao, et al. "fastANCOM: a fast method for analysis of compositions of microbiomes" (under review, 2022)
+- Zhou, C., Wang, H., Zhao, H., & Wang, T. (2022). fastANCOM: a fast method for analysis of compositions of microbiomes. Bioinformatics, 38(7), 2039-2041.
